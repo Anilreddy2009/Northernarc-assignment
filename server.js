@@ -1,76 +1,83 @@
-const path = require("path");
-const http = require("http");
-const express = require("express");
-const socketio = require("socket.io");
-const formatMessage = require("./utils/messages");
-const {
-  userJoin,
-  getCurrentUser,
-  userLeave,
-  getRoomUsers,
-} = require("./utils/users");
+const xml2js=require('xml2js')
+const fs=require('fs')
 
-const app = express();
-const server = http.createServer(app);
-const io = socketio(server);
 
-// Set static folder
-app.use(express.static(path.join(__dirname, "public")));
+const arr1=[]
+const arr2=[]
+const arr3=[]
+const arr4=[]
+const obj={}
+fs.readFile(__dirname+'/model1.xml',(err,data)=>{
+  if(err) throw new Error(err)
 
-const botName = "ChatCord Bot";
+  const parser1=new xml2js.Parser()
 
-// Run when client connects
-io.on("connection", (socket) => {
-  console.log(io.of("/").adapter);
-  socket.on("joinRoom", ({ username, room }) => {
-    const user = userJoin(socket.id, username, room);
+  parser1.parseStringPromise(data)
+      .then((res)=>{
+          for(let i=0;i<6;i++){
+              arr1.push(res.tutorials.tutorial[i])
+          }
+      }).catch((err)=>{
+        console.log(err)
+      })
+})
 
-    socket.join(user.room);
+fs.readFile(__dirname+'/model2.xml',(err,data)=>{
+  if(err) throw new Error(err)
 
-    // Welcome current user
-    socket.emit("message", formatMessage(botName, "Welcome to ChatCord!"));
+  const parser2=new xml2js.Parser()
 
-    // Broadcast when a user connects
-    socket.broadcast
-      .to(user.room)
-      .emit(
-        "message",
-        formatMessage(botName, `${user.username} has joined the chat`)
-      );
+  parser2.parseStringPromise(data)
+      .then((res)=>{
+        for(let i=0;i<6;i++){
+          arr2.push(res.tutorials.tutorial[i])
+      }
+      }).catch((err)=>{
+        console.log(err)
+      })
+      comp(arr1,arr2)
+})
 
-    // Send users and room info
-    io.to(user.room).emit("roomUsers", {
-      room: user.room,
-      users: getRoomUsers(user.room),
-    });
-  });
-
-  // Listen for chatMessage
-  socket.on("chatMessage", (msg) => {
-    const user = getCurrentUser(socket.id);
-
-    io.to(user.room).emit("message", formatMessage(user.username, msg));
-  });
-
-  // Runs when client disconnects
-  socket.on("disconnect", () => {
-    const user = userLeave(socket.id);
-
-    if (user) {
-      io.to(user.room).emit(
-        "message",
-        formatMessage(botName, `${user.username} has left the chat`)
-      );
-
-      // Send users and room info
-      io.to(user.room).emit("roomUsers", {
-        room: user.room,
-        users: getRoomUsers(user.room),
-      });
+function comp(a1,a2){
+    for(let i=0;i<a2.length;i++){
+      let count=0
+      for(let j=0;j<a1.length;j++){
+          if(a2[i].title===a1[j].title){
+              count =count+1
+          }
+      }
+      if(count===1){
+        a2[i].p="both"
+         arr4.push(a2[i])
+      }else{
+        a2[i].p=2
+        arr4.push(a2[i])
+      }
     }
-  });
-});
+    console.log(arr4)
+    for(let i=0;i<a1.length;i++){
+      let count=0
+      for(let j=0;j<a2.length;j++){
+          if(a1[i].title===a2[j].title){
+              count =count+1
+          }
+      }
+      if(count===1){
+         a1[i].p="both"
+      }else{
+        a1[i].p=1
+        arr3.push(a1[i])
+      }
+    }
+    console.log(arr3)
+    const combArr=arr4.concat(arr3)
 
-const PORT = process.env.PORT || 3000;
+    for(let k=0;k<combArr.length;k++){
+      obj[k]=combArr[k]
+    }
 
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    const builder=new xml2js.Builder()
+    let xml=builder.buildObject(obj)
+    console.log(xml)
+}
+

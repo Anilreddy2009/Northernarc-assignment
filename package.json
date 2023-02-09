@@ -10,9 +10,14 @@
   "author": "Anil",
   "license": "MIT",
   "dependencies": {
+    "Builder": "^4.0.1",
+    "crypto": "^1.0.1",
     "express": "^4.18.2",
+    "fs": "^0.0.1-security",
+    "http": "^0.0.1-security",
     "moment": "^2.29.4",
-    "socket.io": "^4.5.4"
+    "socket.io": "^4.5.4",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"
